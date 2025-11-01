@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        firebase_uid: {
+        firebaseUid: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
@@ -68,7 +68,8 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: 'Point',
         },
         location_coordinates: {
-            type: DataTypes.GEOMETRY('POINT'),
+            type: DataTypes.ARRAY(DataTypes.FLOAT),
+            comment: '[longitude, latitude]',
         },
     }, {
         tableName: 'service_providers',
@@ -77,6 +78,23 @@ module.exports = (sequelize, DataTypes) => {
         createdAt: 'created_at',
         updatedAt: 'updated_at',
     });
+
+    ServiceProvider.associate = (models) => {
+    ServiceProvider.hasMany(models.ServiceRequest, {
+        foreignKey: 'provider_id',
+        as: 'serviceRequests',
+    });
+    ServiceProvider.hasMany(models.Rating, {
+        foreignKey: 'reviewee_id',
+        as: 'receivedRatings',
+    });
+    ServiceProvider.hasMany(models.Payment, {
+        foreignKey: 'provider_id',
+        as: 'payments',
+    });
+};
+
+
 
     return ServiceProvider;
 };
