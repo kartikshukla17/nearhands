@@ -4,45 +4,31 @@ const { Payment, ServiceRequest, User, ServiceProvider } = require('../models');
 // Create a new payment (POST /api/payments)
 exports.create = async (req, res) => {
   try {
-    const { user_id, provider_id, job_id, amount, method, status } = req.body;
-
-    // Verify the job exists
-    const job = await ServiceRequest.findByPk(job_id);
-    if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
+    const idempotencyKey = req.headers['idempotency-key'];
+    if (!idempotencyKey) {
+      return res.status(400).json({ message: 'Idempotency key required' });
     }
 
-    const user = await User.findByPk(user_id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    const provider = await ServiceProvider.findByPk(provider_id);
-    if (!provider) return res.status(404).json({ message: 'Service provider not found' });
-
-
-    // Check if payment already exists for this job
-    const existing = await Payment.findOne({ where: { job_id } });
-    if (existing) {
-      return res.status(200).json({ message: 'Payment already exists', payment: existing });
+    // Check for existing payment with same idempotency key
+    const existingPayment = await Payment.findOne({ 
+      where: { idempotency_key: idempotencyKey } 
+    });
+    if (existingPayment) {
+      return res.status(200).json({ payment: existingPayment });
     }
 
-    const payment = await Payment.create({
-      user_id,
-      provider_id,
-      job_id,
-      amount,
-      method,
-      status: status || 'pending',
+    // Queue payment processing
+    await paymentQueue.add('CREATE_PAYMENT', {
+      ...req.body,
+      idempotency_key: idempotencyKey
     });
 
-    // Update job payment status if payment is completed
-    if (status === 'completed') {
-      await job.update({ payment_status: 'completed' });
-    }
-
-    return res.status(201).json({ message: 'Payment created successfully', payment });
+    return res.status(202).json({ 
+      message: 'Payment processing initiated' 
+    });
   } catch (error) {
-    console.error('Error creating payment:', error);
-    return res.status(500).json({ message: 'Internal server error', error });
+    console.error('Error initiating payment:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 

@@ -47,7 +47,40 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-
+      transaction_id: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false,
+      },
+      idempotency_key: {
+        type: DataTypes.STRING,
+        unique: true,
+      },
+      gateway: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      gateway_response: {
+        type: DataTypes.JSON,
+      },
+      parent_transaction_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      plan_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
+      validity_start: {
+        type: DataTypes.DATE,
+      },
+      validity_end: {
+        type: DataTypes.DATE,
+      },
+      payment_type: {
+        type: DataTypes.ENUM('FULL', 'EMI', 'SPLIT'),
+        defaultValue: 'FULL',
+      },
     },
     {
       tableName: 'payments',
