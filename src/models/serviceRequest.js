@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.UUID,
             allowNull: false,
             references: {
-                model: 'service_providers',
+                model: 'ServiceProviders',
                 key: 'id',
             },
         },
@@ -43,7 +43,8 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: 'Point',
         },
         location_coordinates: {
-            type: DataTypes.GEOMETRY('POINT'),
+            type: DataTypes.ARRAY(DataTypes.FLOAT),
+            comment: '[longitude, latitude]',
         },
         otp: {
             type: DataTypes.STRING,
@@ -64,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: 'pending',
         },
     }, {
-        tableName: 'service_requests',
+        tableName: 'ServiceRequests',
         timestamps: true,
         underscored: true,
         createdAt: 'created_at',

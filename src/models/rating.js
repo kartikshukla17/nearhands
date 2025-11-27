@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'service_requests', // ✅ correct table
+          model: 'ServiceRequests', // ✅ correct table
           key: 'id',
         },
       },

@@ -2,6 +2,7 @@ const { Rating, User, ServiceProvider } = require('../models');
 
 
 // Create a new rating (POST /api/ratings)
+// Create a new rating (POST /api/ratings)
 exports.create = async (req, res) => {
   try {
     const { job_id, reviewee_id, rating, comment } = req.body;
@@ -9,53 +10,74 @@ exports.create = async (req, res) => {
     // Firebase UID comes from middleware (decoded token)
     const firebaseUid = req.user.uid;
 
-    // Get the user (reviewer) from firebase UID
-    let reviewer = await User.findOne({ where: { firebaseUid: firebaseUid } });
-    let reviewer_type = 'user';
+    // 1️⃣ Identify reviewer (User or Provider)
+    let reviewer = await User.findOne({ where: { firebaseUid } });
+    let reviewer_type = "user";
+
     if (!reviewer) {
-      reviewer = await ServiceProvider.findOne({ where: { firebaseUid: firebaseUid } });
-      reviewer_type = 'provider';
-    }
-    if (!reviewer) {
-      return res.status(404).json({ message: 'Reviewer not found' });
+      reviewer = await ServiceProvider.findOne({ where: { firebaseUid } });
+      reviewer_type = "provider";
     }
 
+    if (!reviewer) {
+      return res.status(404).json({ message: "Reviewer not found" });
+    }
 
-    // Check if rating already exists for this job
-    const existing = await Rating.findOne({ 
-      where: { 
+    // 2️⃣ Identify reviewee (User or Provider)
+    let reviewee = await ServiceProvider.findByPk(reviewee_id);
+    let reviewee_type = "provider";
+
+    if (!reviewee) {
+      reviewee = await User.findByPk(reviewee_id);
+      reviewee_type = "user";
+    }
+
+    if (!reviewee) {
+      return res.status(404).json({ message: "Reviewee not found" });
+    }
+
+    // 3️⃣ Prevent duplicate rating for same job by same reviewer
+    const existing = await Rating.findOne({
+      where: {
         job_id,
-        reviewer_id: reviewer.id 
-      } 
+        reviewer_id: reviewer.id,
+      },
     });
-    
+
     if (existing) {
-      return res.status(200).json({ message: 'Rating already exists', rating: existing });
+      return res.status(200).json({ message: "Rating already exists", rating: existing });
     }
 
-    // Validate rating value
+    // 4️⃣ Validate rating
     if (rating < 1 || rating > 5) {
-      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
     }
 
-    // Create the rating
+    // 5️⃣ Create new rating
     const newRating = await Rating.create({
       job_id,
       reviewer_id: reviewer.id,
+      reviewer_type,      // REQUIRED
       reviewee_id,
+      reviewee_type,      // REQUIRED
       rating,
       comment,
     });
 
-    // Update service provider's average rating
+    // 6️⃣ Update provider's rating
     await updateProviderRating(reviewee_id);
 
-    return res.status(201).json({ message: 'Rating created successfully', rating: newRating });
+    return res.status(201).json({
+      message: "Rating created successfully",
+      rating: newRating,
+    });
+
   } catch (error) {
-    console.error('Error creating rating:', error);
-    return res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error("Error creating rating:", error);
+    return res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
+
 
 // Get all ratings (GET /api/ratings)
 exports.getAll = async (req, res) => {

@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: false, // always tied to a provider
         references: {
-          model: 'service_providers',
+          model: 'ServiceProviders',
           key: 'id',
         },
       },
@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: true, // some payments might be for subscriptions
         references: {
-          model: 'service_requests', // <-- correct table
+          model: 'ServiceRequests', // <-- correct table
           key: 'id',
         },
       },
