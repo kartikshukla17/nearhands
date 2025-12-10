@@ -1,4 +1,5 @@
 const { ServiceRequest, User, ServiceProvider } = require('../models');
+const { matchRequest } = require('../services/matchingService');
 
 // Create a new service request (POST /api/requests)
 exports.create = async (req, res) => {
@@ -24,10 +25,12 @@ exports.create = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Verify service provider exists
-    const provider = await ServiceProvider.findByPk(provider_id);
-    if (!provider) {
-      return res.status(404).json({ message: 'Service provider not found' });
+    // Verify service provider exists only if provider_id is provided
+    if (provider_id) {
+      const provider = await ServiceProvider.findByPk(provider_id);
+      if (!provider) {
+        return res.status(404).json({ message: 'Service provider not found' });
+      }
     }
 
     // Generate OTP (6-digit)
@@ -50,6 +53,15 @@ exports.create = async (req, res) => {
       extra_charges: extra_charges || 0,
       payment_status: 'pending',
     });
+
+    // Try to match immediately if no provider_id was provided
+    if (!provider_id && category) {
+      console.log(`🔍 Attempting immediate match for request: ${serviceRequest.id}`);
+      // Run matching asynchronously (don't wait for it)
+      matchRequest(serviceRequest).catch(err => {
+        console.error('Error in immediate matching:', err);
+      });
+    }
 
     return res.status(201).json({ 
       message: 'Service request created successfully', 

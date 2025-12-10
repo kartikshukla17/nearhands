@@ -4,29 +4,79 @@ const { User } = require('../models');
 //here it just creates a user in the db if already exists the return 200 else makes new user and returns 201.
 exports.create = async (req, res) => {
   try {
+    console.log('📥 Received user creation request');
+    console.log('📥 Firebase UID:', req.user?.uid);
+    console.log('📥 Request body:', req.body);
+    
     const { name, email, phone, location_coordinates } = req.body;
 
     // Firebase UID comes from middleware (decoded token)
-    const firebaseUid = req.user.uid;
+    const firebaseUid = req.user?.uid;
+    
+    if (!firebaseUid) {
+      return res.status(401).json({ message: 'Firebase UID not found. Please authenticate first.' });
+    }
 
     // Check if user already exists
     const existing = await User.findOne({ where: { firebaseUid } });
     if (existing) {
+      console.log('✅ User already exists:', existing.id);
       return res.status(200).json({ message: 'User already exists', user: existing });
     }
 
-    const user = await User.create({
-      firebaseUid,
-      name,
-      email,
-      phone,
-      location_coordinates,
-    });
+    // Validate required fields
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+    
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ message: 'Phone number is required' });
+    }
 
+    // Prepare user data (only include email if provided and not empty)
+    const userData = {
+      firebaseUid,
+      name: name.trim(),
+      phone: phone.trim(),
+      location_coordinates,
+    };
+    
+    // Only add email if it's provided and not empty
+    if (email && email.trim()) {
+      userData.email = email.trim();
+    }
+
+    console.log('📤 Creating user with data:', { ...userData, location_coordinates: userData.location_coordinates ? '[coordinates]' : undefined });
+    
+    const user = await User.create(userData);
+
+    console.log('✅ User created successfully:', user.id);
     return res.status(201).json({ message: 'User created successfully', user });
   } catch (error) {
-    console.error(' Error creating user:', error);
-    return res.status(500).json({ message: 'Internal server error', error });
+    console.error('❌ Error creating user:', error);
+    
+    // Handle specific Sequelize errors
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      const field = error.errors?.[0]?.path || 'field';
+      return res.status(400).json({ 
+        message: `${field === 'phone' ? 'Phone number' : field === 'email' ? 'Email' : 'A field'} already exists. Please use a different value.`,
+        error: error.message 
+      });
+    }
+    
+    if (error.name === 'SequelizeValidationError') {
+      const validationError = error.errors?.[0]?.message || 'Validation error';
+      return res.status(400).json({ 
+        message: validationError,
+        error: error.message 
+      });
+    }
+    
+    return res.status(500).json({ 
+      message: 'Internal server error', 
+      error: error.message,
+      details: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 };
 

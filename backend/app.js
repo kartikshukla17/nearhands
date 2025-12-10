@@ -15,6 +15,7 @@ app.use(morgan("dev"));
 
 //  Import Routes
 
+const authRoutes = require("./src/routes/authRoutes.js");
 const userRoutes = require("./src/routes/userRoutes.js");
 const providerRoutes = require("./src/routes/serviceProviderRoutes.js");
 const serviceRequestRoutes = require("./src/routes/serviceRequestRoutes.js");
@@ -31,6 +32,7 @@ app.get("/", (req, res) => {
 
 //  Mount Routes
 
+app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/providers", providerRoutes);
 app.use("/api/service-requests", serviceRequestRoutes);
