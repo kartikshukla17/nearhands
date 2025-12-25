@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../types';
-import { useAuth } from '../../context/AuthContext';
-import { SERVICE_CATEGORIES } from '../../config/constants';
+import { useUnifiedAuth } from '../../../shared/context/UnifiedAuthContext';
+import { SERVICE_CATEGORIES } from '../../../shared/config/config/constants';
 import * as Location from 'expo-location';
 import api from '../../services/api';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,7 +26,7 @@ interface Props {
 }
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);

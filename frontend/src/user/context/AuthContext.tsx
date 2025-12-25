@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { auth } from '../../shared/config/config/firebase';
 import { setAuthToken, removeAuthToken } from '../services/api';
 import { User } from '../types';
 import api from '../services/api';

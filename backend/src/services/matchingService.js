@@ -1,6 +1,7 @@
 const { ServiceRequest, ServiceProvider } = require('../models');
 const { Op } = require('sequelize');
 const { calculateDistanceKm } = require('../utils/geo');
+const { notifyProviderOfMatch } = require('./notificationService');
 
 exports.matchRequest = async (rawRequest) => {
   try {
@@ -80,6 +81,12 @@ exports.matchRequest = async (rawRequest) => {
     });
 
     console.log(`✅ Matched request ${request.id} with provider ${nearest.name} (distance: ${minDistance.toFixed(2)} km)`);
+    
+    // STEP 6: Notify the provider about the new match
+    notifyProviderOfMatch(request.id, nearest.id).catch(err => {
+      console.error('Error sending notification to provider:', err);
+    });
+
     return nearest;
 
   } catch (err) {

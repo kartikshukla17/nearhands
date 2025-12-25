@@ -12,13 +12,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../../shared/context/UnifiedAuthContext';
 import * as Location from 'expo-location';
 import api from '../../services/api';
 
 const UserDetailsScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { firebaseUser, refreshUser } = useAuth();
+  const { firebaseUser, refreshProfile } = useUnifiedAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState(firebaseUser?.email || '');
   const [phone, setPhone] = useState(firebaseUser?.phoneNumber || '');
@@ -75,7 +75,7 @@ const UserDetailsScreen: React.FC = () => {
       const response = await api.users.create(userData);
       console.log('✅ User created successfully:', response);
 
-      await refreshUser();
+      await refreshProfile();
       // Navigation will be handled by RootNavigator based on auth state
       // The screen will automatically switch when hasCompletedProfile becomes true
     } catch (error: any) {

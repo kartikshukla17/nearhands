@@ -13,10 +13,10 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { AuthStackParamList } from '../../types';
-import { auth } from '../../config/firebase';
+import { auth } from '../../../shared/config/config/firebase';
 import { signInWithCustomToken } from 'firebase/auth';
 import { setAuthToken } from '../../services/api';
-import { API_BASE_URL } from '../../config/constants';
+import { API_BASE_URL } from '../../../shared/config/config/constants';
 
 type OTPScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'OTP'>;
 type OTPScreenRouteProp = RouteProp<AuthStackParamList, 'OTP'>;

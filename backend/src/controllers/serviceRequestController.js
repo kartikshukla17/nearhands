@@ -1,5 +1,6 @@
 const { ServiceRequest, User, ServiceProvider } = require('../models');
 const { matchRequest } = require('../services/matchingService');
+const { notifyProviderOfMatch } = require('../services/notificationService');
 
 // Create a new service request (POST /api/requests)
 exports.create = async (req, res) => {
@@ -54,8 +55,16 @@ exports.create = async (req, res) => {
       payment_status: 'pending',
     });
 
-    // Try to match immediately if no provider_id was provided
-    if (!provider_id && category) {
+    // If provider_id was provided directly, notify the provider immediately
+    if (provider_id) {
+      // Update status to matched since provider is already assigned
+      await serviceRequest.update({ status: 'matched' });
+      // Notify the provider
+      notifyProviderOfMatch(serviceRequest.id, provider_id).catch(err => {
+        console.error('Error sending notification to provider:', err);
+      });
+    } else if (category) {
+      // Try to match immediately if no provider_id was provided
       console.log(`🔍 Attempting immediate match for request: ${serviceRequest.id}`);
       // Run matching asynchronously (don't wait for it)
       matchRequest(serviceRequest).catch(err => {
@@ -152,6 +161,69 @@ exports.getByProvider = async (req, res) => {
     return res.status(200).json(requests);
   } catch (error) {
     console.error('Error fetching provider service requests:', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+// Get service requests by authenticated provider (GET /api/requests/provider/me)
+exports.getByProviderMe = async (req, res) => {
+  try {
+    const firebaseUid = req.user.uid;
+
+    // Get the provider from firebase UID
+    const provider = await ServiceProvider.findOne({ where: { firebaseUid: firebaseUid } });
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' });
+    }
+
+    const requests = await ServiceRequest.findAll({
+      where: { provider_id: provider.id },
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'phone', 'email'] },
+      ],
+      order: [['created_at', 'DESC']],
+    });
+
+    return res.status(200).json(requests);
+  } catch (error) {
+    console.error('Error fetching provider service requests:', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+// Get new/unread requests for authenticated provider (GET /api/requests/provider/me/new)
+exports.getNewRequestsForProvider = async (req, res) => {
+  try {
+    const firebaseUid = req.user.uid;
+    const { getNewRequestsForProvider } = require('../services/notificationService');
+    const { Op } = require('sequelize');
+
+    // Get the provider from firebase UID
+    const provider = await ServiceProvider.findOne({ where: { firebaseUid: firebaseUid } });
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' });
+    }
+
+    // Get requests that were matched in the last 24 hours and haven't been started
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const newRequests = await ServiceRequest.findAll({
+      where: {
+        provider_id: provider.id,
+        status: 'matched',
+        updated_at: {
+          [Op.gte]: oneDayAgo,
+        },
+      },
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'phone', 'email'] },
+      ],
+      order: [['updated_at', 'DESC']],
+    });
+
+    return res.status(200).json(newRequests);
+  } catch (error) {
+    console.error('Error fetching new requests for provider:', error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };

@@ -1,12 +1,13 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../types';
-import LoginScreen from '../screens/Auth/LoginScreen';
-import OTPScreen from '../screens/Auth/OTPScreen';
+import { AuthStackParamList } from '../../shared/types/types/index';
+// Reuse user auth screens since authentication is the same
+import LoginScreen from '../../user/screens/Auth/LoginScreen';
+import OTPScreen from '../../user/screens/Auth/OTPScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
-const AuthNavigator: React.FC = () => {
+const ProviderAuthNavigator: React.FC = () => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -20,5 +21,4 @@ const AuthNavigator: React.FC = () => {
   );
 };
 
-export default AuthNavigator;
-
+export default ProviderAuthNavigator;

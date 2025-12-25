@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
-import { AuthProvider } from './context/AuthContext';
-import RootNavigator from './navigation/RootNavigator';
-import { API_BASE_URL } from './config/constants';
+import { UnifiedAuthProvider } from './shared/context/UnifiedAuthContext';
+import MainRootNavigator from './navigation/MainRootNavigator';
+import { API_BASE_URL } from './shared/config/config/constants';
 
 export default function App() {
   useEffect(() => {
@@ -19,10 +19,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
+      <UnifiedAuthProvider>
         <StatusBar style="auto" />
-        <RootNavigator />
-      </AuthProvider>
+        <MainRootNavigator />
+      </UnifiedAuthProvider>
     </SafeAreaProvider>
   );
 }

@@ -7,6 +7,8 @@ router.post('/', verifyFirebaseToken, requestController.create);
 router.get('/', requestController.getAll);
 router.get('/status/:status', requestController.getByStatus);
 router.get('/user/me', verifyFirebaseToken, requestController.getByUser);
+router.get('/provider/me', verifyFirebaseToken, requestController.getByProviderMe);
+router.get('/provider/me/new', verifyFirebaseToken, requestController.getNewRequestsForProvider);
 router.get('/provider/:providerId', requestController.getByProvider);
 router.get('/:id', requestController.getById);
 

@@ -10,7 +10,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { AppStackParamList } from '../../types';
 import api from '../../services/api';
-import { POLLING_INTERVAL, MAX_POLLING_ATTEMPTS, REQUEST_STATUS } from '../../config/constants';
+import { POLLING_INTERVAL, MAX_POLLING_ATTEMPTS, REQUEST_STATUS } from '../../../shared/config/config/constants';
 import { Ionicons } from '@expo/vector-icons';
 
 type FindingMatchScreenNavigationProp = NativeStackNavigationProp<AppStackParamList, 'FindingMatch'>;

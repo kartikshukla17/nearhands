@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
-import { API_BASE_URL } from '../../config/constants';
+import { API_BASE_URL } from '../../../shared/config/config/constants';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AppStackParamList } from '../types';
+import { AppStackParamList } from '../../shared/types/types/index';
 import HomeScreen from '../screens/Home/HomeScreen';
 import FindingMatchScreen from '../screens/Request/FindingMatchScreen';
 import ProviderDetailsScreen from '../screens/Request/ProviderDetailsScreen';

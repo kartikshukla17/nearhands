@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { API_BASE_URL } from '../config/constants';
+import { API_BASE_URL } from '../../shared/config/config/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAuthToken, removeAuthToken } from '../../user/services/api';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -24,10 +25,6 @@ apiClient.interceptors.request.use(
         if (__DEV__) {
           console.log(`🔐 Adding auth token to request: ${config.method?.toUpperCase()} ${config.url}`);
         }
-      } else {
-        if (__DEV__) {
-          console.warn(`⚠️ No auth token found for request: ${config.method?.toUpperCase()} ${config.url}`);
-        }
       }
     } catch (error) {
       console.error('Error getting token:', error);
@@ -44,90 +41,67 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
       await AsyncStorage.removeItem(TOKEN_KEY);
-      // You can dispatch a logout action here if using Redux/Context
     }
     return Promise.reject(error);
   }
 );
 
-// Token management
-export const setAuthToken = async (token: string): Promise<void> => {
-  try {
-    await AsyncStorage.setItem(TOKEN_KEY, token);
-  } catch (error) {
-    console.error('Error storing token:', error);
-    throw error;
-  }
-};
-
-export const getAuthToken = async (): Promise<string | null> => {
-  try {
-    return await AsyncStorage.getItem(TOKEN_KEY);
-  } catch (error) {
-    console.error('Error getting token:', error);
-    return null;
-  }
-};
-
-export const removeAuthToken = async (): Promise<void> => {
-  try {
-    await AsyncStorage.removeItem(TOKEN_KEY);
-  } catch (error) {
-    console.error('Error removing token:', error);
-  }
-};
-
-// API Methods
-export const api = {
-  // User endpoints
-  users: {
+// Provider API Methods
+export const providerApi = {
+  // Provider endpoints
+  providers: {
     create: async (data: {
       name: string;
       email?: string;
       phone: string;
+      services: string[];
+      custom_services?: string[];
       location_coordinates?: [number, number];
+      document_aadhaar?: string;
+      document_selfie_url?: string;
+      document_additional_docs?: string[];
     }) => {
-      const response = await apiClient.post('/users', data);
+      const response = await apiClient.post('/providers', data);
       return response.data;
     },
     getProfile: async () => {
-      const response = await apiClient.get('/users/me');
+      const response = await apiClient.get('/providers/me');
       return response.data;
     },
     update: async (id: string, data: Partial<{
       name?: string;
       email?: string;
       phone?: string;
+      services?: string[];
+      custom_services?: string[];
       location_coordinates?: [number, number];
     }>) => {
-      const response = await apiClient.put(`/users/${id}`, data);
+      const response = await apiClient.put(`/providers/${id}`, data);
+      return response.data;
+    },
+    updateSubscription: async (id: string, data: {
+      subscription_plan?: string;
+      subscription_active?: boolean;
+      subscription_expiry_date?: string;
+    }) => {
+      const response = await apiClient.put(`/providers/${id}/subscription`, data);
       return response.data;
     },
   },
 
-  // Service Request endpoints
+  // Service Request endpoints (provider view)
   serviceRequests: {
-    create: async (data: {
-      category?: string;
-      description?: string;
-      summary?: string;
-      media_images?: string[];
-      media_audio?: string[];
-      location_coordinates?: [number, number];
-      base_price?: number;
-      extra_charges?: number;
-    }) => {
-      const response = await apiClient.post('/service-requests', data);
+    getByProvider: async () => {
+      const response = await apiClient.get('/service-requests/provider/me');
+      return response.data;
+    },
+    getNewRequests: async () => {
+      const response = await apiClient.get('/service-requests/provider/me/new');
       return response.data;
     },
     getById: async (id: string) => {
       const response = await apiClient.get(`/service-requests/${id}`);
-      return response.data;
-    },
-    getByUser: async () => {
-      const response = await apiClient.get('/service-requests/user/me');
       return response.data;
     },
     updateStatus: async (id: string, status: string) => {
@@ -141,5 +115,4 @@ export const api = {
   },
 };
 
-export default api;
-
+export default providerApi;
